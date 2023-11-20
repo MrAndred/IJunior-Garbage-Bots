@@ -14,8 +14,16 @@ public class Base : MonoBehaviour
     private void Start()
     {
         _isWorking = true;
-
+        InitUnits();
         StartCoroutine(ExtractByPeriod());
+    }
+
+    private void InitUnits()
+    {
+        foreach (var unit in _units)
+        {
+            unit.Init();
+        }
     }
 
     private IEnumerator ExtractByPeriod()
@@ -51,13 +59,13 @@ public class Base : MonoBehaviour
     private IEnumerator Extract(Unit unit, Resource resource)
     {
         Vector3 unitOriginPosition = unit.transform.position;
-        unit.SetIsBusy(false);
+        unit.SetIsBusy(true);
         resource.SetIsExtracting(true);
 
-        yield return StartCoroutine(unit.MoveTo(resource.transform.position));
-        yield return StartCoroutine(unit.ExtractResource(resource));
-        yield return StartCoroutine(unit.MoveTo(unitOriginPosition));
-        yield return StartCoroutine(unit.UnloadResource(resource, transform.position));
+        yield return unit.MoveTo(resource.transform.position);
+        yield return unit.ExtractResource(resource);
+        yield return unit.MoveTo(unitOriginPosition);
+        yield return unit.UnloadResource(resource, transform.position);
 
         _resourcesCount++;
         Destroy(resource.gameObject);
