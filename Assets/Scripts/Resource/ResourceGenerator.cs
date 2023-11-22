@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class ResourceGenerator : MonoBehaviour
@@ -16,8 +17,7 @@ public class ResourceGenerator : MonoBehaviour
     private float _timeToGenerateResource = 3f;
     private bool _isGenerating = false;
 
-
-    private void Start()
+    public void Start()
     {
         _isGenerating = true;
         StartCoroutine(GenerateResource());
@@ -36,6 +36,5 @@ public class ResourceGenerator : MonoBehaviour
 
             yield return waitSeconds;
         }
-
     }
 }

@@ -1,54 +1,63 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Base : MonoBehaviour
 {
-    [SerializeField] private Unit[] _units;
+    [SerializeField] private Unit[] _baseUnits;
+    [SerializeField] private Transform _resourcesInProcess;
     [SerializeField] private Transform _resourcesParent;
+
+    private Queue<Resource> _resources;
+    private Queue<Unit> _units;
 
     private float _extractPeriod = 0.5f;
     private bool _isWorking = false;
     private int _maxResourcesCount = 10;
     private int _resourcesCount = 0;
 
-    private void Start()
+    public void Start()
     {
+        _resources = new Queue<Resource>();
+        _units = new Queue<Unit>();
         _isWorking = true;
         InitUnits();
-        StartCoroutine(ExtractByPeriod());
+        StartCoroutine(SendResourceCoordinatesByPeriod());
     }
 
     private void InitUnits()
     {
-        foreach (var unit in _units)
+        foreach (var unit in _baseUnits)
         {
-            unit.Init();
+            unit.Init(transform.position);
+            _units.Enqueue(unit);
         }
     }
 
-    private IEnumerator ExtractByPeriod()
+    private IEnumerator SendResourceCoordinatesByPeriod()
     {
         WaitForSeconds waitSeconds = new WaitForSeconds(_extractPeriod);
 
         while (_isWorking == true && _resourcesCount < _maxResourcesCount)
         {
-            StartExtraction();
+            SendCoordinates();
             yield return waitSeconds;
         }
     }
 
-    private void StartExtraction()
+    private void SendCoordinates()
     {
-        Unit unit = GetFreeUnit();
-
-        if (unit == null)
-        {
-            return;
-        }
-
         Resource resource = GetResource();
 
         if (resource == null)
+        {
+            UpdateResources();
+            return;
+        }
+
+        Unit unit = GetFreeUnit();
+
+        if (unit == null)
         {
             return;
         }
@@ -58,50 +67,46 @@ public class Base : MonoBehaviour
 
     private IEnumerator Extract(Unit unit, Resource resource)
     {
-        Vector3 unitOriginPosition = unit.transform.position;
-        unit.SetIsBusy(true);
-        resource.SetIsExtracting(true);
-
-        yield return unit.MoveTo(resource.transform.position);
-        yield return unit.ExtractResource(resource);
-        yield return unit.MoveTo(unitOriginPosition);
-        yield return unit.UnloadResource(resource, transform.position);
-
+        yield return StartCoroutine(unit.StartExtraction(resource));
+        _units.Enqueue(unit);
         _resourcesCount++;
-        Destroy(resource.gameObject);
-        unit.SetIsBusy(false);
     }
 
-    private Resource GetResource()
+    private void UpdateResources()
     {
-        if (_resourcesParent == null || _resourcesParent.childCount == 0)
+        if (_resources.Count > 0)
         {
-            return null;
+            return;
         }
 
         Resource[] resources = _resourcesParent.GetComponentsInChildren<Resource>();
 
         foreach (Resource resource in resources)
         {
-            if (resource.IsExtracting == false)
-            {
-                return resource;
-            }
+            _resources.Enqueue(resource);
+        }
+    }
+
+    private Resource GetResource()
+    {
+        if (_resources.Count == 0)
+        {
+            return null;
         }
 
-        return null;
+        Resource resource = _resources.Dequeue();
+        resource.transform.SetParent(_resourcesInProcess);
+
+        return resource;
     }
 
     private Unit GetFreeUnit()
     {
-        foreach (var unit in _units)
+        if (_units.Count == 0)
         {
-            if (unit.IsBusy == false)
-            {
-                return unit;
-            }
+            return null;
         }
 
-        return null;
+        return _units.Dequeue();
     }
 }

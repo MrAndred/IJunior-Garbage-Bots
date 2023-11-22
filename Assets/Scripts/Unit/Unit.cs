@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class Unit : MonoBehaviour
@@ -10,35 +11,39 @@ public class Unit : MonoBehaviour
     private UnitExtractor _unitExtractor;
     private UnitSender _unitSender;
 
-    private bool _isBusy;
-    private bool _hasExtractedResource;
+    private Vector3 _basePosition;
 
-    public bool IsBusy => _isBusy;
-
-    public void Init()
+    public void Init(Vector3 basePosition)
     {
-        _isBusy = false;
+        _basePosition = basePosition;
         _unitMover = new UnitMover(this, _speed, _stopDistance);
         _unitExtractor = new UnitExtractor(this, _extractionSpeed);
         _unitSender = new UnitSender(_extractionSpeed);
     }
 
-    public void SetIsBusy(bool isBusy)
+    public IEnumerator StartExtraction(Resource resource)
     {
-        _isBusy = isBusy;
+        Vector3 originPosition = transform.position;
+
+        yield return MoveTo(resource.transform.position);
+        yield return ExtractResource(resource);
+        yield return MoveTo(originPosition);
+        yield return UnloadResource(resource, _basePosition);
+
+        Destroy(resource.gameObject);
     }
 
-    public Coroutine MoveTo(Vector3 targetPosition)
+    private Coroutine MoveTo(Vector3 targetPosition)
     {
         return StartCoroutine(_unitMover.MoveTo(targetPosition));
     }
 
-    public Coroutine ExtractResource(Resource resource)
+    private Coroutine ExtractResource(Resource resource)
     {
         return StartCoroutine(_unitExtractor.ExtractResource(resource));
     }
 
-    public Coroutine UnloadResource(Resource resource, Vector3 targetPosition)
+    private Coroutine UnloadResource(Resource resource, Vector3 targetPosition)
     {
         return StartCoroutine(_unitSender.UnloadResource(resource, targetPosition));
     }
