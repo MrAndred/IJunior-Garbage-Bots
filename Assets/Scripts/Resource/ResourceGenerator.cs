@@ -17,7 +17,7 @@ public class ResourceGenerator : MonoBehaviour
     private float _timeToGenerateResource = 3f;
     private bool _isGenerating = false;
 
-    public void Start()
+    public void Init()
     {
         _isGenerating = true;
         StartCoroutine(GenerateResource());

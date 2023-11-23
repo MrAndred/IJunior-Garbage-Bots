@@ -21,6 +21,12 @@ public class Unit : MonoBehaviour
         _unitSender = new UnitSender(_extractionSpeed);
     }
 
+    public IEnumerator BuildNewBase(Vector3 position)
+    {
+        _basePosition = position;
+        yield return MoveTo(position);
+    }
+
     public IEnumerator StartExtraction(Resource resource)
     {
         Vector3 originPosition = transform.position;
