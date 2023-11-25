@@ -185,6 +185,7 @@ MonoBehaviour:
   _resourceGenerator: {fileID: 836206944}
   _baseTemplate: {fileID: 6660380232101453589, guid: 86b5c1a4a3f701b409a3066b01724437, type: 3}
   _unitTemplate: {fileID: 4422978513277688229, guid: cc65bbb8f88d1514e9a4d43d8aadb1c7, type: 3}
+  _extendPointTemplate: {fileID: 4596529031958468708, guid: ecd0acf72d5b1eb4aba6c1a515b76a7e, type: 3}
 --- !u!1001 &296502023
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -888,7 +889,7 @@ PrefabInstance:
       objectReference: {fileID: 1643802357}
     - target: {fileID: 6660380232101453589, guid: 86b5c1a4a3f701b409a3066b01724437, type: 3}
       propertyPath: _newUnitCost
-      value: 0
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 6660380232101453589, guid: 86b5c1a4a3f701b409a3066b01724437, type: 3}
       propertyPath: _resourcesParent

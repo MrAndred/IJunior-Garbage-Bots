@@ -10,7 +10,6 @@ public class Base : MonoBehaviour, IPointerClickHandler
     [SerializeField] private Transform _baseUnitsParent;
     [SerializeField] private int _newUnitCost;
     [SerializeField] private float _spawnRadius;
-    [SerializeField] private ExtendPoint _extendPointTemplate;
 
     [SerializeField] private Transform _resourcesInProcess;
 
@@ -19,6 +18,8 @@ public class Base : MonoBehaviour, IPointerClickHandler
     private Queue<Unit> _units;
 
     private float _extractPeriod = 0.5f;
+    private float _spawnUnitPeriod = 10f;
+
     private bool _isWorking = false;
     private int _maxResourcesCount = 10;
     private int _resourcesCount = 0;
@@ -36,28 +37,22 @@ public class Base : MonoBehaviour, IPointerClickHandler
     private Map _map;
     private Base _baseTemplate;
     private Unit _unitTemplate;
+    private ExtendPoint _extendPointTemplate;
 
-    public void Init(Transform resourcesParent, Map map, Base baseTemplate, Unit unitTemplate)
+    public void Init(Transform resourcesParent, Map map, Base baseTemplate, Unit unitTemplate, ExtendPoint extendPoint)
     {
-        DefaultInit(resourcesParent, map, baseTemplate, unitTemplate);
+        DefaultInit(resourcesParent, map, baseTemplate, unitTemplate, extendPoint);
     }
 
-    public void Init(Transform resourcesParent, Map map, Base baseTemplate, Unit unitTemplate, List<Unit> units)
+    public void Init(Transform resourcesParent, Map map, Base baseTemplate, Unit unitTemplate, ExtendPoint extendPoint, List<Unit> units)
     {
         _baseUnits = units;
-        DefaultInit(resourcesParent, map, baseTemplate, unitTemplate);
+        DefaultInit(resourcesParent, map, baseTemplate, unitTemplate, extendPoint);
     }
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (eventData.clickCount == 1)
-        {
-            LoadCreateBaseQuery();
-        }
-        else
-        {
-            CreateNewUnit();
-        }
+        LoadCreateBaseQuery();
     }
 
     private void InitUnits()
@@ -70,40 +65,40 @@ public class Base : MonoBehaviour, IPointerClickHandler
         }
     }
 
-    private IEnumerator SendResourceCoordinatesByPeriod()
+    private IEnumerator SendCoordinatesByPeriod()
     {
         WaitForSeconds waitSeconds = new WaitForSeconds(_extractPeriod);
 
-        while (_isWorking == true && _resourcesCount < _maxResourcesCount)
+        while (_isWorking == true)
         {
             if (_isExtending == true && _resourcesCount >= _newBaseCost)
             {
                 BuildNewBase();
             }
-            else
+            else if (_resourcesCount < _maxResourcesCount)
             {
-                SendCoordinates();
+                SendResourceCoordinates();
             }
 
             yield return waitSeconds;
         }
     }
 
-    private void SendCoordinates()
+    private void SendResourceCoordinates()
     {
+        Unit unit = GetFreeUnit();
+
+        if (unit == null)
+        {
+            return;
+        }
+
         Resource resource = GetResource();
 
         if (resource == null)
         {
             UpdateResources();
-            return;
-        }
-
-        Unit unit = GetFreeUnit();
-
-        if (unit == null)
-        {
-            _resources.Enqueue(resource);
+            _units.Enqueue(unit);
             return;
         }
 
@@ -115,6 +110,8 @@ public class Base : MonoBehaviour, IPointerClickHandler
         yield return StartCoroutine(unit.StartExtraction(resource));
         _units.Enqueue(unit);
         _resourcesCount++;
+
+        SpawnNewUnit();
     }
 
     private void UpdateResources()
@@ -141,7 +138,7 @@ public class Base : MonoBehaviour, IPointerClickHandler
 
         Resource resource = _resources.Dequeue();
 
-        if (resource.IsExtracting == true)
+        if (resource.IsExtracting)
         {
             return null;
         }
@@ -182,7 +179,7 @@ public class Base : MonoBehaviour, IPointerClickHandler
 
         yield return StartCoroutine(unit.BuildNewBase(_extendPosition));
         Base newBase = _baseBuilder.BuildBase(_extendPosition);
-        newBase.Init(_resourcesParent, _map, _baseTemplate, _unitTemplate, new List<Unit>() { unit });
+        newBase.Init(_resourcesParent, _map, _baseTemplate, _unitTemplate, _extendPointTemplate, new List<Unit>() { unit });
     }
 
     private void LoadCreateBaseQuery()
@@ -225,8 +222,17 @@ public class Base : MonoBehaviour, IPointerClickHandler
         _resourcesCount -= _newUnitCost;
     }
 
-    private void DefaultInit(Transform resourcesParent, Map map, Base baseTemplate, Unit unitTemplate)
+    private void SpawnNewUnit()
     {
+        if (_isExtending == false && _resourcesCount >= _newUnitCost)
+        {
+            CreateNewUnit();
+        }
+    }
+
+    private void DefaultInit(Transform resourcesParent, Map map, Base baseTemplate, Unit unitTemplate, ExtendPoint extendPoint)
+    {
+        _extendPointTemplate = extendPoint;
         _resourcesParent = resourcesParent;
         _map = map;
         _baseTemplate = baseTemplate;
@@ -240,6 +246,7 @@ public class Base : MonoBehaviour, IPointerClickHandler
         _hasChildBase = false;
 
         InitUnits();
-        StartCoroutine(SendResourceCoordinatesByPeriod());
+
+        StartCoroutine(SendCoordinatesByPeriod());
     }
 }

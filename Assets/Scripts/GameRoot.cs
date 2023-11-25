@@ -11,6 +11,7 @@ public class GameRoot : MonoBehaviour
     [Header("Prefabs")]
     [SerializeField] private Base _baseTemplate;
     [SerializeField] private Unit _unitTemplate;
+    [SerializeField] private ExtendPoint _extendPointTemplate;
 
     private void Start()
     {
@@ -22,7 +23,7 @@ public class GameRoot : MonoBehaviour
     {
         foreach (var baseObject in _bases)
         {
-            baseObject.Init(_resources, _map, _baseTemplate, _unitTemplate);
+            baseObject.Init(_resources, _map, _baseTemplate, _unitTemplate, _extendPointTemplate);
         }
     }
 }
